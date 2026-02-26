@@ -11,7 +11,7 @@ st.set_page_config(page_title="CRM管理後台", page_icon="📋", layout="wide"
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 
-# ================= 2. 登入頁面 UI =================
+# ================= 2. 登入頁面 UI (安全升級版) =================
 def login_page():
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -20,13 +20,21 @@ def login_page():
         st.write("")
         st.markdown("<h2 style='text-align: center;'>🔐 系統登入</h2>", unsafe_allow_html=True)
         
+        # 從 Secrets 讀取正確密碼，並加入防呆機制
+        try:
+            correct_password = st.secrets["ADMIN_PASSWORD"]
+        except KeyError:
+            st.error("❌ 系統尚未設定管理員密碼，請至後台 Secrets 設定 ADMIN_PASSWORD。")
+            st.stop()
+        
         with st.form("login_form"):
             username = st.text_input("帳號", placeholder="請輸入帳號 (admin)")
             password = st.text_input("密碼", type="password", placeholder="請輸入密碼")
             submit = st.form_submit_button("登入", use_container_width=True)
             
             if submit:
-                if username == 'admin' and password == '123qwe':
+                # 將輸入的密碼與 Secrets 裡的密碼進行比對
+                if username == 'admin' and password == correct_password:
                     st.session_state['logged_in'] = True
                     st.success("登入成功！正在載入系統...")
                     st.rerun()
@@ -175,3 +183,4 @@ if st.session_state['logged_in']:
     main_app()
 else:
     login_page()
+
