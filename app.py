@@ -8,17 +8,17 @@ import json
 st.set_page_config(page_title="CRM管理後台", page_icon="📋", layout="wide")
 
 # ================= 資安防護：隱藏下載 CSV 按鈕 =================
-st.markdown(
-    """
-    <style>
-    /* 隱藏表格右上角的工具列 (防止使用者一鍵下載 CSV) */
-    [data-testid="stElementToolbar"] {
-        display: none;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# st.markdown(
+#     """
+#     <style>
+#     /* 隱藏表格右上角的工具列 (防止使用者一鍵下載 CSV) */
+#     [data-testid="stElementToolbar"] {
+#         display: none;
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 # ================= 1. 登入狀態初始化 =================
 if 'logged_in' not in st.session_state:
@@ -120,3 +120,4 @@ def main_app():
         df_copy[date_col_name] = pd.to_datetime(df_copy[date_col_name], errors='coerce')
         
         date
+
