@@ -7,6 +7,19 @@ import json
 # ================= 網頁基本設定 =================
 st.set_page_config(page_title="CRM管理後台", page_icon="📋", layout="wide")
 
+# ================= 資安防護：隱藏下載 CSV 按鈕 =================
+st.markdown(
+    """
+    <style>
+    /* 隱藏表格右上角的工具列 (防止使用者一鍵下載 CSV) */
+    [data-testid="stElementToolbar"] {
+        display: none;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
 # ================= 1. 登入狀態初始化 =================
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
@@ -49,7 +62,7 @@ def main_app():
             st.session_state['logged_in'] = False
             st.rerun()
 
-    st.title("📋 露營易拉罐CRM")
+    st.title("📋 CRM管理後台")
     st.markdown("自動比對未來 **60天內** 即將到期的項目。勾選並填寫回訪內容後，點擊儲存即可回寫至雲端。")
 
     # ================= 讀取機密變數 =================
@@ -106,82 +119,4 @@ def main_app():
         df_copy = df.copy()
         df_copy[date_col_name] = pd.to_datetime(df_copy[date_col_name], errors='coerce')
         
-        date_mask = (df_copy[date_col_name].dt.date >= today_date) & (df_copy[date_col_name].dt.date <= target_date)
-        contacted_mask = (df_log['聯絡項目'] == item_name)
-        contacted_plates = df_log[contacted_mask]['車牌'].unique()
-        not_contacted_mask = ~df_copy['車牌'].isin(contacted_plates)
-        
-        result_df = df_copy[date_mask & not_contacted_mask].copy()
-        
-        if not result_df.empty:
-            result_df = result_df.sort_values(by=date_col_name)
-            result_df['倒數天數'] = (result_df[date_col_name].dt.date - today_date).apply(lambda x: x.days)
-            result_df[date_col_name] = result_df[date_col_name].dt.strftime('%Y-%m-%d')
-            
-            # 在資料表最前面插入「勾選已聯絡」與「回訪內容」兩個欄位
-            result_df.insert(0, '勾選已聯絡', False)
-            result_df.insert(1, '回訪內容', '') 
-            
-        return result_df
-
-    # ★ 這裡把原本的 '保險到期日' 改為 '強制險到期日'，項目名稱改為 '強制險'
-    df_compulsory = get_expiring_data(df_main, df_log, '強制險到期日', '強制險')
-    df_commercial = get_expiring_data(df_main, df_log, '商業險到期日', '商業險')
-    df_inspect = get_expiring_data(df_main, df_log, '驗車到期日', '驗車')
-
-    # ================= UI 介面：分頁設計 =================
-    # ★ 分頁標題同步更新
-    tab1, tab2, tab3 = st.tabs(["🛡️ 強制險到期", "💼 商業險到期", "🔍 驗車到期"])
-
-    def render_tab(df_show, item_name, date_col):
-        if df_show.empty:
-            st.success(f"🎉 近期內無即將到期的「{item_name}」，或已全數聯絡完畢！")
-            return
-
-        st.write(f"以下為未來 60 天內到期，且尚未聯絡的名單（共 {len(df_show)} 筆）：")
-        st.info("💡 提示：您可以勾選最左側的方塊，並在『回訪內容』欄位輸入文字後，一併儲存。")
-        
-        display_columns = ['勾選已聯絡', '回訪內容', date_col, '倒數天數', '車牌', '客戶姓名', '電話']
-        display_columns = [col for col in display_columns if col in df_show.columns]
-
-        # 顯示可編輯的表格
-        edited_df = st.data_editor(
-            df_show[display_columns],
-            hide_index=True,
-            use_container_width=True,
-            disabled=[col for col in display_columns if col not in ['勾選已聯絡', '回訪內容']] 
-        )
-
-        selected_mask = edited_df['勾選已聯絡'] == True
-        selected_data = edited_df[selected_mask][['車牌', '回訪內容']].to_dict('records')
-
-        if selected_data:
-            if st.button(f"💾 儲存已聯絡名單 ({len(selected_data)} 筆)", key=f"btn_{item_name}"):
-                with st.spinner("正在寫入 Google 試算表..."):
-                    rows_to_append = []
-                    for row in selected_data:
-                        car = row['車牌']
-                        note = str(row['回訪內容']).strip()
-                        rows_to_append.append([car, today_str, item_name, note])
-                        
-                    worksheet_log.append_rows(rows_to_append)
-                    
-                st.success("✅ 儲存成功！資料已回寫至紀錄表。")
-                st.cache_data.clear()
-                st.rerun()
-
-    # ★ 渲染分頁時對應正確的變數與欄位
-    with tab1:
-        render_tab(df_compulsory, "強制險", "強制險到期日")
-    with tab2:
-        render_tab(df_commercial, "商業險", "商業險到期日")
-    with tab3:
-        render_tab(df_inspect, "驗車", "驗車到期日")
-
-# ================= 4. 路由控制 =================
-if st.session_state['logged_in']:
-    main_app()
-else:
-    login_page()
-
-
+        date
