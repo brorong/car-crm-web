@@ -5,7 +5,7 @@ import gspread
 import json
 
 # ================= 網頁基本設定 =================
-st.set_page_config(page_title="露營易拉罐--客服系統", page_icon="📋", layout="wide")
+st.set_page_config(page_title="露營易拉罐客服", page_icon="📋", layout="wide")
 
 # ================= 1. 登入狀態初始化 =================
 if 'logged_in' not in st.session_state:
@@ -43,7 +43,7 @@ def main_app():
             st.session_state['logged_in'] = False
             st.rerun()
 
-    st.title("📋 車隊效期管理後台")
+    st.title("📋 露營易拉罐客服後台")
     st.markdown("自動比對未來 **60天內** 即將到期的項目。勾選並填寫回訪內容後，點擊儲存即可回寫至雲端。")
 
     # ================= 讀取機密變數 =================
@@ -181,3 +181,4 @@ if st.session_state['logged_in']:
 else:
 
     login_page()
+
